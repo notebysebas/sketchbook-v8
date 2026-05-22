@@ -1160,6 +1160,8 @@ body.ui-hidden #sc-fab{top:auto;right:auto;left:10px;bottom:94px}
         </div>
         <div style="display:flex;gap:3px">
           <button class="btn btn-pill gc-sel-btn" data-selact="dup" style="flex:1;min-width:0;padding:0 3px">Dup</button>
+          <button class="btn btn-pill gc-sel-btn" data-selact="loft" style="flex:1;min-width:0;padding:0 3px">⟁Lft</button>
+          <button class="btn btn-pill gc-sel-btn" data-selact="loft-solid" style="flex:1;min-width:0;padding:0 3px;display:none">~Sld</button>
           <button class="btn btn-pill gc-sel-btn danger" data-selact="del" style="flex:1;min-width:0;padding:0 3px">Del</button>
           <button class="btn btn-pill gc-sel-btn" data-selact="close" style="flex:1;min-width:0;padding:0 3px">✕</button>
         </div>
@@ -1542,6 +1544,8 @@ body.ui-hidden #sc-fab{top:auto;right:auto;left:10px;bottom:94px}
           </div>
           <div style="display:flex;gap:2px">
             <button class="btn btn-pill gc-sel-btn" data-selact="dup" style="flex:1;min-width:0;padding:0 3px">Dup</button>
+            <button class="btn btn-pill gc-sel-btn" data-selact="loft" style="flex:1;min-width:0;padding:0 3px">⟁Lft</button>
+            <button class="btn btn-pill gc-sel-btn" data-selact="loft-solid" style="flex:1;min-width:0;padding:0 3px;display:none">~Sld</button>
             <button class="btn btn-pill gc-sel-btn danger" data-selact="del" style="flex:1;min-width:0;padding:0 3px">Del</button>
             <button class="btn btn-pill gc-sel-btn" data-selact="close" style="flex:1;min-width:0;padding:0 3px">✕</button>
           </div>
@@ -8103,8 +8107,13 @@ window._setSnapEnabled=function(v){
 
   // ── Show/hide loft-solid button based on selection count ──
   window._syncLoftSolidBtn = function(){
+    var show = selectedStrokes.length >= 2;
     var btn = document.getElementById('sg-loft-solid');
-    if(btn) btn.style.display = selectedStrokes.length >= 2 ? '' : 'none';
+    if(btn) btn.style.display = show ? '' : 'none';
+    // Also toggle the ghud-sel / pb-ghud-sel loft-solid buttons
+    document.querySelectorAll('[data-selact="loft-solid"]').forEach(function(b){
+      b.style.display = show ? '' : 'none';
+    });
   };
 
   // ── Serialization ──
@@ -11720,6 +11729,8 @@ animate();
           var sgBtn=document.getElementById('sg-'+act);if(sgBtn)sgBtn.click();
         }
         if(act==='dup'){duplicateSelected();}
+        if(act==='loft'){var sgL=document.getElementById('sg-loft');if(sgL)sgL.click();}
+        if(act==='loft-solid'){var sgLS=document.getElementById('sg-loft-solid');if(sgLS)sgLS.click();}
         if(act==='del'){deleteSelected();}
         if(act==='close'){clearSelection();setMode('draw');}
       }else if(window._selectedPrim_get&&window._selectedPrim_get()){

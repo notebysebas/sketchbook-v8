@@ -42,6 +42,18 @@ body[data-theme="light"]{
   --thumb-bdr:#fff;--toast-bg:rgba(26,26,46,.85);--toast-fg:#e8dcc8;
   --modal-bg:rgba(26,26,46,.35);--sgizmo-bg:rgba(230,230,235,0.78);
 }
+body[data-theme="eink"]{
+  --bg:#ffffff;--bdr:#222222;--ink:#000000;--mut:#333333;
+  --pan:#ffffff;
+  --ink-r:0;--ink-g:0;--ink-b:0;
+  --thumb-bdr:#888;--toast-bg:rgba(0,0,0,.88);--toast-fg:#ffffff;
+  --modal-bg:rgba(0,0,0,.3);--sgizmo-bg:#ffffff;
+}
+body[data-theme="eink"] #cc::after{display:none}
+body[data-theme="eink"] .card{backdrop-filter:none;-webkit-backdrop-filter:none}
+body[data-theme="eink"] .btn:hover,body[data-theme="eink"] .btn.hover{background:transparent;border-color:#000;color:#000}
+body[data-theme="eink"] .btn.on{background:transparent;border:2px solid #000;color:#000;font-weight:600}
+body[data-theme="eink"] .gc-sel-btn{border:1px solid #444;background:transparent;color:#000}
 html{width:100%;height:100%;overflow:hidden;background:var(--bg)}
 body{position:fixed;inset:0;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;background:var(--bg)}
 body{font-family:'DM Mono',monospace}
@@ -985,8 +997,8 @@ body.ui-hidden #sc-fab{top:auto;right:auto;left:10px;bottom:94px}
   <div id="vp-bg-row">
     <span style="font-size:7.5px;color:var(--mut);letter-spacing:.06em;flex-shrink:0">BG</span>
     <div class="bgpop-swatch on" id="vp-bg-beige" title="Tan" style="background:#cdb899"></div>
-    <div class="bgpop-swatch" id="vp-bg-white" title="White" style="background:#f5f0e8;border-color:var(--bdr)"></div>
-    <div class="bgpop-swatch" id="vp-bg-black" title="Black" style="background:#1a1a2e"></div>
+    <div class="bgpop-swatch" id="vp-bg-white" title="White" style="background:#ffffff;border-color:var(--bdr)"></div>
+    <div class="bgpop-swatch" id="vp-bg-black" title="Black" style="background:#2a2a2e"></div>
     <div id="vp-bgpick" title="Custom color"><input type="color" id="vp-bg-custom" value="#cdb899"></div>
   </div>
   <div id="vp-theme-row" style="display:flex;align-items:center;gap:4px;padding:2px 8px 4px">
@@ -994,6 +1006,7 @@ body.ui-hidden #sc-fab{top:auto;right:auto;left:10px;bottom:94px}
     <button class="btn-pill btn theme-btn on" data-theme="default" title="Default theme" style="font-size:6px;height:22px;padding:0 5px">DEF</button>
     <button class="btn-pill btn theme-btn" data-theme="dark" title="Dark theme" style="font-size:6px;height:22px;padding:0 5px">DRK</button>
     <button class="btn-pill btn theme-btn" data-theme="light" title="Light theme" style="font-size:6px;height:22px;padding:0 5px">LGT</button>
+    <button class="btn-pill btn theme-btn" data-theme="eink" title="E-ink theme" style="font-size:6px;height:22px;padding:0 5px">INK</button>
   </div>
 </div>
 
@@ -1068,13 +1081,14 @@ body.ui-hidden #sc-fab{top:auto;right:auto;left:10px;bottom:94px}
 <!-- Background color popover -->
 <div id="bgpop">
   <div class="bgpop-swatch on" id="bgpop-beige" title="Tan" style="background:#cdb899"></div>
-  <div class="bgpop-swatch" id="bgpop-white" title="White" style="background:#f5f0e8;border-color:var(--bdr)"></div>
-  <div class="bgpop-swatch" id="bgpop-black" title="Black" style="background:#1a1a2e"></div>
+  <div class="bgpop-swatch" id="bgpop-white" title="White" style="background:#ffffff;border-color:var(--bdr)"></div>
+  <div class="bgpop-swatch" id="bgpop-black" title="Black" style="background:#2a2a2e"></div>
   <div id="bgpop-pick" title="Custom color"><input type="color" id="bgpop-custom" value="#cdb899"></div>
   <div style="width:1px;height:18px;background:var(--bdr);margin:0 1px;flex-shrink:0"></div>
   <button class="btn-pill btn theme-btn on" data-theme="default" title="Default theme" style="font-size:6px;height:22px;padding:0 5px">DEF</button>
   <button class="btn-pill btn theme-btn" data-theme="dark" title="Dark theme" style="font-size:6px;height:22px;padding:0 5px">DRK</button>
   <button class="btn-pill btn theme-btn" data-theme="light" title="Light theme" style="font-size:6px;height:22px;padding:0 5px">LGT</button>
+  <button class="btn-pill btn theme-btn" data-theme="eink" title="E-ink theme" style="font-size:6px;height:22px;padding:0 5px">INK</button>
 </div>
 
 <!-- Size picker popover — custom value -->
@@ -2114,6 +2128,7 @@ function toggleGraphicScale(on){
 // ── Surface ──────────────────────────────────────────────────────
 const PNORMALS={xy:new THREE.Vector3(0,0,1),xz:new THREE.Vector3(0,1,0),yz:new THREE.Vector3(1,0,0)};
 const SURF_TRACE=0x7a5c3a;
+var _curSurfTrace=SURF_TRACE;
 let curPlane='xz',surfType='plane';
 const surfPos=new THREE.Vector3(),surfEuler=new THREE.Euler(0,0,0,'XYZ');
 let surfScale=2.0;const surfScaleAxes=new THREE.Vector3(1,1,1);
@@ -2129,17 +2144,26 @@ var _surfGridLabels=['OFF','GRD','DOT'];
 var _depthOpSteps=[0.50,0.75,0.90];
 var _depthOpLabels=['50%','75%','90%'];
 var _depthOpIdx=0;
+function _surfGridRGBA(alpha){
+  if(_uiTheme==='eink')return 'rgba(80,80,80,'+alpha+')';
+  if(_surfGridHSL){
+    // Convert HSL to RGB for canvas
+    var tc=new THREE.Color().setHSL(_surfGridHSL.h,_surfGridHSL.s,Math.max(_surfGridHSL.l-0.05,0.15));
+    return 'rgba('+Math.round(tc.r*255)+','+Math.round(tc.g*255)+','+Math.round(tc.b*255)+','+alpha+')';
+  }
+  return 'rgba(100,68,38,'+alpha+')';
+}
 function buildSurfGridTex(){
   var sz=128;
   var cv=document.createElement('canvas');cv.width=sz;cv.height=sz;
   var ctx=cv.getContext('2d');
   ctx.clearRect(0,0,sz,sz);
   if(_surfGridMode===1){
-    ctx.strokeStyle='rgba(100,68,38,0.7)';ctx.lineWidth=1;
+    ctx.strokeStyle=_surfGridRGBA(0.7);ctx.lineWidth=1;
     ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(sz,0);ctx.stroke();
     ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(0,sz);ctx.stroke();
   } else if(_surfGridMode===2){
-    ctx.fillStyle='rgba(110,75,42,0.85)';var r=3;
+    ctx.fillStyle=_surfGridRGBA(0.85);var r=3;
     ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fill();
     ctx.beginPath();ctx.arc(sz,0,r,0,Math.PI*2);ctx.fill();
     ctx.beginPath();ctx.arc(0,sz,r,0,Math.PI*2);ctx.fill();
@@ -2174,7 +2198,7 @@ function applyFrostedGridTex(){
 function buildSurf(){
   while(surfGroup.children.length){const c=surfGroup.children[0];if(c.geometry)c.geometry.dispose();if(c.material)c.material.dispose();surfGroup.remove(c);}
   surfMesh=null;_frostedMesh=null;_frostedMat=null;_frostedGridMesh=null;_frostedGridMat=null;
-  const tint=SURF_TRACE;let geo;
+  const tint=_activeSurfTrace();let geo;
   if(surfType==='plane')geo=new THREE.PlaneGeometry(10,10,8,8);
   else if(surfType==='cube')geo=new THREE.BoxGeometry(3,3,3,3,3,3);
   else if(surfType==='cylinder')geo=new THREE.CylinderGeometry(1.5,1.5,3,32);
@@ -2983,6 +3007,100 @@ var _inkRGB={r:26,g:26,b:46};
 function _themeInk(a){return 'rgba('+_inkRGB.r+','+_inkRGB.g+','+_inkRGB.b+','+a+')';}
 // Contrasting highlight color for canvas hover overlays
 var _themeHilight='#fff';
+// E-ink desaturation: convert any CSS color to grayscale luminance when eink theme active
+function _einkDesat(col){
+  if(_uiTheme!=='eink')return col;
+  // Parse hex
+  var m=col.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
+  if(m){
+    var r=parseInt(m[1],16),g=parseInt(m[2],16),b=parseInt(m[3],16);
+    var l=Math.round(0.299*r+0.587*g+0.114*b);
+    var h=l.toString(16);if(h.length<2)h='0'+h;
+    return '#'+h+h+h;
+  }
+  return col;
+}
+
+// Sync world grid + surface + drawing plane colors for eink vs normal themes
+var SURF_TRACE_EINK=0x888888;
+function _activeSurfTrace(){return _uiTheme==='eink'?SURF_TRACE_EINK:_curSurfTrace;}
+
+// Track surface grid HSL for texture generation
+var _surfGridHSL=null;
+
+// Derive grid/plane colors from bg color (non-eink themes)
+function _syncGridToBg(bgCol){
+  var hsl={};bgCol.getHSL(hsl);
+  var isDark=hsl.l<0.3;
+  // Surface trace: shift lightness toward mid, push harder on very light bgs
+  // For near-white achromatic bgs, use same gray as eink
+  var isNearWhite=hsl.l>0.9&&hsl.s<0.1;
+  if(isNearWhite){
+    var traceL=0.53;var traceS=0;
+  } else {
+    var lOff=isDark?0.22:0.22;
+    var traceL=isDark?Math.min(hsl.l+lOff,0.5):Math.max(hsl.l-lOff,0.3);
+    var traceS=Math.min(hsl.s*1.3+0.05,0.6);
+  }
+  var traceCol=new THREE.Color().setHSL(hsl.h,traceS,traceL);
+  var traceHex=traceCol.getHex();
+  _curSurfTrace=traceHex;
+  if(surfFillMat)surfFillMat.color.setHex(traceHex);
+  if(surfWireMat)surfWireMat.color.setHex(traceHex);
+  if(surfGroup){surfGroup.children.forEach(function(c){
+    if(c.isLineSegments&&c.material&&c.renderOrder===8)c.material.color.setHex(traceHex);
+  });}
+  if(_fpsPlaneFill&&_fpsPlaneFill.material)_fpsPlaneFill.material.color.setHex(traceHex);
+  // World grid: two shades — center line darker, grid lines lighter
+  if(isNearWhite){
+    var g1L=0.6;var g2L=0.7;var gS=0;
+  } else {
+    var g1Off=isDark?0.15:0.18;
+    var g2Off=isDark?0.10:0.10;
+    var g1L=isDark?Math.min(hsl.l+g1Off,0.45):Math.max(hsl.l-g1Off,0.35);
+    var g2L=isDark?Math.min(hsl.l+g2Off,0.38):Math.max(hsl.l-g2Off,0.42);
+    var gS=Math.min(hsl.s*1.1+0.03,0.5);
+  }
+  var gS=Math.min(hsl.s*1.1+0.03,0.5);
+  var gc1=new THREE.Color().setHSL(hsl.h,gS,g1L);
+  var gc2=new THREE.Color().setHSL(hsl.h,gS,g2L);
+  var newGrid=new THREE.GridHelper(20,20,gc1.getHex(),gc2.getHex());
+  gridH.geometry.dispose();
+  gridH.geometry=newGrid.geometry;
+  if(gridH.material.vertexColors===undefined)gridH.material.vertexColors=true;
+  gridH.material.needsUpdate=true;
+  newGrid.material.dispose();
+  // Store HSL for surface grid texture
+  _surfGridHSL={h:hsl.h,s:traceS,l:traceL};
+  applyFrostedGridTex();
+  markDirty();
+}
+function _syncGridColors(eink){
+  if(eink){
+    _curSurfTrace=SURF_TRACE_EINK;
+    _surfGridHSL=null;
+    // World grid gray
+    var newGrid=new THREE.GridHelper(20,20,0x999999,0xcccccc);
+    gridH.geometry.dispose();
+    gridH.geometry=newGrid.geometry;
+    if(gridH.material.vertexColors===undefined)gridH.material.vertexColors=true;
+    gridH.material.needsUpdate=true;
+    newGrid.material.dispose();
+    // Surface/plane materials gray
+    if(surfFillMat)surfFillMat.color.setHex(SURF_TRACE_EINK);
+    if(surfWireMat)surfWireMat.color.setHex(SURF_TRACE_EINK);
+    if(surfGroup){surfGroup.children.forEach(function(c){
+      if(c.isLineSegments&&c.material&&c.renderOrder===8)c.material.color.setHex(SURF_TRACE_EINK);
+    });}
+    if(_fpsPlaneFill&&_fpsPlaneFill.material)_fpsPlaneFill.material.color.setHex(SURF_TRACE_EINK);
+    applyFrostedGridTex();
+    markDirty();
+  } else {
+    // Re-derive from current bg
+    var bgCol=scene.background||new THREE.Color(0xcdb899);
+    _syncGridToBg(bgCol);
+  }
+}
 
 function setUITheme(theme){
   _uiTheme=theme||'default';
@@ -2994,11 +3112,17 @@ function setUITheme(theme){
     _inkRGB={r:26,g:26,b:46};
     _themeHilight='#fff';
     document.body.setAttribute('data-theme','light');
+  } else if(_uiTheme==='eink'){
+    _inkRGB={r:0,g:0,b:0};
+    _themeHilight='#ccc';
+    document.body.setAttribute('data-theme','eink');
+    _syncGridColors(true);
   } else {
     _inkRGB={r:26,g:26,b:46};
     _themeHilight='#fff';
     document.body.removeAttribute('data-theme');
   }
+  if(_uiTheme!=='eink')_syncGridColors(false);
   // Update meta theme-color
   var mt=document.querySelector('meta[name="theme-color"]');
   if(mt){
@@ -8723,7 +8847,7 @@ window._setSnapEnabled=function(v){
     var sz=_fpsPlaneSz;
     // Fill mesh — same style as surfFillMat
     var fillMat=new THREE.MeshBasicMaterial({
-      color:SURF_TRACE,transparent:true,opacity:0.16,
+      color:_activeSurfTrace(),transparent:true,opacity:0.16,
       side:THREE.DoubleSide,depthWrite:false
     });
     _fpsPlaneFill=new THREE.Mesh(new THREE.PlaneGeometry(sz,sz),fillMat);
@@ -9350,8 +9474,8 @@ window._setSnapEnabled=function(v){
     function(v){
       curPlane=v;
       document.querySelectorAll('[data-plane]').forEach(function(b){b.classList.toggle('on',b.dataset.plane===v);});
-      if(surfFillMat)surfFillMat.color.setHex(SURF_TRACE);
-      if(surfWireMat)surfWireMat.color.setHex(SURF_TRACE);
+      if(surfFillMat)surfFillMat.color.setHex(_activeSurfTrace());
+      if(surfWireMat)surfWireMat.color.setHex(_activeSurfTrace());
       syncSurf();
       const btn=document.getElementById('pb-cyc-plane');if(btn)btn.textContent=PLANE_LABELS[v]||v.toUpperCase();
     },
@@ -9902,7 +10026,7 @@ document.getElementById('bhide').addEventListener('click',function(){
 });
 
 // ── Background color ──────────────────────────────────────────────
-var BG_PRESETS={beige:'#cdb899',white:'#f5f0e8',black:'#1a1a2e'};
+var BG_PRESETS={beige:'#cdb899',white:'#ffffff',black:'#2a2a2e'};
 var _curBgKey='beige';
 function setBgColor(hex,key){
   var c=new THREE.Color(hex);
@@ -9926,11 +10050,15 @@ function setBgColor(hex,key){
     if(pick)pick.classList.add('on');
     if(vpPick)vpPick.classList.add('on');
   }
-  // Auto-select UI theme based on BG luminance
-  var lum=0.299*c.r+0.587*c.g+0.114*c.b;
-  if(lum<0.25) setUITheme('dark');
-  else if(lum>0.82) setUITheme('light');
-  else setUITheme('default');
+  // Auto-select UI theme based on BG luminance (skip if user chose eink)
+  if(_uiTheme!=='eink'){
+    var lum=0.299*c.r+0.587*c.g+0.114*c.b;
+    if(lum<0.25) setUITheme('dark');
+    else if(lum>0.82) setUITheme('light');
+    else setUITheme('default');
+    // Adapt grid/plane colors to match bg hue
+    _syncGridToBg(c);
+  }
   // Sync theme selector if exists
   _syncThemeBtns();
 }
@@ -9951,8 +10079,8 @@ function setBgColor(hex,key){
     }
   });
   document.getElementById('bgpop-beige').addEventListener('click',function(){setBgColor('#cdb899','beige');});
-  document.getElementById('bgpop-white').addEventListener('click',function(){setBgColor('#f5f0e8','white');});
-  document.getElementById('bgpop-black').addEventListener('click',function(){setBgColor('#1a1a2e','black');});
+  document.getElementById('bgpop-white').addEventListener('click',function(){setBgColor('#ffffff','white');});
+  document.getElementById('bgpop-black').addEventListener('click',function(){setBgColor('#2a2a2e','black');});
   var customInput=document.getElementById('bgpop-custom');
   if(customInput)customInput.addEventListener('input',function(){setBgColor(this.value,null);});
   document.addEventListener('click',function(e){
@@ -9971,8 +10099,12 @@ function _syncThemeBtns(){
 document.querySelectorAll('.theme-btn').forEach(function(b){
   b.addEventListener('click',function(e){
     e.stopPropagation();
-    setUITheme(b.getAttribute('data-theme'));
+    var th=b.getAttribute('data-theme');
+    setUITheme(th);
     _syncThemeBtns();
+    if(th==='eink'){
+      setBgColor('#ffffff','eink');
+    }
   });
 });
 
@@ -10128,8 +10260,8 @@ document.querySelectorAll('.theme-btn').forEach(function(b){
   });
   // View-pop BG swatches
   document.getElementById('vp-bg-beige').addEventListener('click',function(e){e.stopPropagation();setBgColor('#cdb899','beige');});
-  document.getElementById('vp-bg-white').addEventListener('click',function(e){e.stopPropagation();setBgColor('#f5f0e8','white');});
-  document.getElementById('vp-bg-black').addEventListener('click',function(e){e.stopPropagation();setBgColor('#1a1a2e','black');});
+  document.getElementById('vp-bg-white').addEventListener('click',function(e){e.stopPropagation();setBgColor('#ffffff','white');});
+  document.getElementById('vp-bg-black').addEventListener('click',function(e){e.stopPropagation();setBgColor('#2a2a2e','black');});
   var vpCustom=document.getElementById('vp-bg-custom');
   if(vpCustom)vpCustom.addEventListener('input',function(e){e.stopPropagation();setBgColor(this.value,null);});
 
@@ -10505,7 +10637,7 @@ document.getElementById('vw-rec').addEventListener('click',function(){startRecor
 document.getElementById('rec-stop-btn').addEventListener('click',function(){stopRecordViews(false);});
 
 // Surface / plane
-document.querySelectorAll('[data-plane]').forEach(b=>b.addEventListener('click',function(){document.querySelectorAll('[data-plane]').forEach(x=>x.classList.remove('on'));this.classList.add('on');curPlane=this.dataset.plane;if(surfFillMat)surfFillMat.color.setHex(SURF_TRACE);if(surfWireMat)surfWireMat.color.setHex(SURF_TRACE);syncSurf();}));
+document.querySelectorAll('[data-plane]').forEach(b=>b.addEventListener('click',function(){document.querySelectorAll('[data-plane]').forEach(x=>x.classList.remove('on'));this.classList.add('on');curPlane=this.dataset.plane;if(surfFillMat)surfFillMat.color.setHex(_activeSurfTrace());if(surfWireMat)surfWireMat.color.setHex(_activeSurfTrace());syncSurf();}));
 document.querySelectorAll('[data-surf]').forEach(b=>b.addEventListener('click',function(){document.querySelectorAll('[data-surf]').forEach(x=>x.classList.remove('on'));this.classList.add('on');if(window._applySurfType)window._applySurfType(this.dataset.surf);}));
 
 // Colors

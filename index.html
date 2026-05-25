@@ -7084,6 +7084,19 @@ window._setSnapEnabled=function(v){
       rails.push(r);
     }
 
+    // Align rail directions — reverse any rail whose points are closer to
+    // the first rail when flipped (prevents bowtie/twist)
+    var ref = rails[0];
+    for(var ri = 1; ri < rails.length; ri++){
+      var r = rails[ri];
+      var distFwd = 0, distRev = 0;
+      for(var pi = 0; pi < N; pi++){
+        distFwd += ref[pi].distanceToSquared(r[pi]);
+        distRev += ref[pi].distanceToSquared(r[N-1-pi]);
+      }
+      if(distRev < distFwd) r.reverse();
+    }
+
     var cen = new THREE.Vector3();
     var total = 0;
     rails.forEach(function(r){ r.forEach(function(p){ cen.add(p); total++; }); });
